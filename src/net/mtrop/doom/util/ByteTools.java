@@ -1,7 +1,10 @@
 package net.mtrop.doom.util;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 
 public class ByteTools {
 	public static byte[] toLittleEndian(short s) {
@@ -16,5 +19,33 @@ public class ByteTools {
 		bb.order(ByteOrder.LITTLE_ENDIAN);
 		bb.putInt(i);
 		return bb.array();
+	}
+
+	public static boolean bitIsSet(int flags, int bitmask) {
+		return (flags & bitmask) != 0;
+	}
+
+	public static ByteBuffer readInputStream(InputStream in) throws IOException {
+		ArrayList<Byte> streamBuffer = new ArrayList<>(in.available());
+		int bin = in.read();
+		while(bin != -1) {
+			streamBuffer.add((byte)(0xFF & bin));
+			bin = in.read();
+		}
+		ByteBuffer bb = ByteBuffer.allocate(streamBuffer.size());
+		for(byte b : streamBuffer) {
+			bb.put(b);
+		}
+		return bb;
+	}
+
+	public static int booleansToInt(boolean... bit) {
+		int number = 0;
+		for(int i=0; i < bit.length; i++) {
+			if(bit[i]) {
+				number = number | (1 << i);
+			}
+		}
+		return number;
 	}
 }

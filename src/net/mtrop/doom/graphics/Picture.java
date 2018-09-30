@@ -208,16 +208,7 @@ public class Picture implements BinaryObject, GraphicObject
 		// JC: This is perhaps less efficient because we're reading the whole thing into memory and THEN breaking it out.
 		// This means twice the ram will be required versus just reading the objects directly, but I know of no way to
 		// flip the endianness of an object stream.
-		ArrayList<Byte> streamBuffer = new ArrayList<>(in.available());
-		int bin = in.read();
-		while(bin != -1) {
-			streamBuffer.add((byte)(0xFF & bin));
-			bin = in.read();
-		}
-		ByteBuffer bb = ByteBuffer.allocate(streamBuffer.size());
-		for(byte b : streamBuffer) {
-			bb.put(b);
-		}
+		ByteBuffer bb = ByteTools.readInputStream(in);
 		bb.order(ByteOrder.LITTLE_ENDIAN);
 
 		setDimensions((short)(bb.getShort() & 0xFFFF), (short)(bb.getShort() & 0xFFFF));

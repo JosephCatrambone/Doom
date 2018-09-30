@@ -12,12 +12,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import com.blackrook.commons.Common;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import net.mtrop.doom.BinaryObject;
+import net.mtrop.doom.util.ByteTools;
 import net.mtrop.doom.util.RangeUtils;
 
 /**
@@ -151,44 +150,45 @@ public class DoomLinedef extends CommonLinedef implements BinaryObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
 	}
 
 	@Override
 	public void readBytes(InputStream in) throws IOException
 	{
-		SuperReader sr = new SuperReader(in, SuperReader.LITTLE_ENDIAN);
+		ByteBuffer bb = ByteTools.readInputStream(in);
 		
-		vertexStartIndex = sr.readUnsignedShort();
-		vertexEndIndex = sr.readUnsignedShort();
+		vertexStartIndex = (short)(bb.getShort() & 0xFFFF); // Unsigned short
+		vertexEndIndex = (short)(bb.getShort() & 0xFFFF);
 		
 		// bitflags
-		int flags = sr.readUnsignedShort();
-		impassable = Common.bitIsSet(flags, (1 << 0));
-		monsterBlocking = Common.bitIsSet(flags, (1 << 1));
-		twoSided = Common.bitIsSet(flags, (1 << 2));
-		upperUnpegged = Common.bitIsSet(flags, (1 << 3));
-		lowerUnpegged = Common.bitIsSet(flags, (1 << 4));
-		secret = Common.bitIsSet(flags, (1 << 5));
-		soundBlocking = Common.bitIsSet(flags, (1 << 6));
-		notDrawn = Common.bitIsSet(flags, (1 << 7));
-		mapped = Common.bitIsSet(flags, (1 << 8));
-		passThru = Common.bitIsSet(flags, (1 << 9));
+		int flags = (short)(bb.getShort() & 0xFFFF);
+		impassable = ByteTools.bitIsSet(flags, (1 << 0));
+		monsterBlocking = ByteTools.bitIsSet(flags, (1 << 1));
+		twoSided = ByteTools.bitIsSet(flags, (1 << 2));
+		upperUnpegged = ByteTools.bitIsSet(flags, (1 << 3));
+		lowerUnpegged = ByteTools.bitIsSet(flags, (1 << 4));
+		secret = ByteTools.bitIsSet(flags, (1 << 5));
+		soundBlocking = ByteTools.bitIsSet(flags, (1 << 6));
+		notDrawn = ByteTools.bitIsSet(flags, (1 << 7));
+		mapped = ByteTools.bitIsSet(flags, (1 << 8));
+		passThru = ByteTools.bitIsSet(flags, (1 << 9));
 		
-		special = sr.readUnsignedShort();
-		tag = sr.readUnsignedShort();
-		sidedefFrontIndex = sr.readShort();
-		sidedefBackIndex = sr.readShort();
+		special = (short)(bb.getShort() & 0xFFFF);
+		tag = (short)(bb.getShort() & 0xFFFF);
+		sidedefFrontIndex = bb.getShort();
+		sidedefBackIndex = bb.getShort();
 	}
 
 	@Override
 	public void writeBytes(OutputStream out) throws IOException 
 	{
-		SuperWriter sw = new SuperWriter(out, SuperWriter.LITTLE_ENDIAN);
-		sw.writeUnsignedShort(vertexStartIndex);
-		sw.writeUnsignedShort(vertexEndIndex);
-		
-		sw.writeUnsignedShort(Common.booleansToInt(
+		ByteBuffer bb = ByteBuffer.allocate(2+2+4+2+2+2+2);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.putShort((short)vertexStartIndex); // TODO: Unsigned.
+		bb.putShort((short)vertexEndIndex); // TODO: Unsigned.
+
+		bb.putShort((short)ByteTools.booleansToInt(
 			impassable,
 			monsterBlocking,
 			twoSided,
@@ -199,12 +199,12 @@ public class DoomLinedef extends CommonLinedef implements BinaryObject
 			notDrawn,
 			mapped,
 			passThru
-		));
-		
-		sw.writeUnsignedShort(special);
-		sw.writeUnsignedShort(tag);
-		sw.writeShort((short)sidedefFrontIndex);
-		sw.writeShort((short)sidedefBackIndex);
+		)); // TODO: Unsigned.
+
+		bb.putShort((short)special); // TODO: Unsigned.
+		bb.putShort((short)tag); // TODO: Unsigned.
+		bb.putShort((short)sidedefFrontIndex);
+		bb.putShort((short)sidedefBackIndex);
 	}
 	
 	@Override
