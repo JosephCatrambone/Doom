@@ -12,12 +12,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import com.blackrook.commons.Common;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import net.mtrop.doom.BinaryObject;
+import net.mtrop.doom.util.ByteTools;
 import net.mtrop.doom.util.NameUtils;
 import net.mtrop.doom.util.RangeUtils;
 
@@ -264,33 +263,39 @@ public class DoomSector implements BinaryObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
 	}
 
 	@Override
 	public void readBytes(InputStream in) throws IOException
 	{
-		SuperReader sr = new SuperReader(in, SuperReader.LITTLE_ENDIAN);
-		floorHeight = sr.readShort();
-		ceilingHeight = sr.readShort();
-		floorTexture = NameUtils.nullTrim(sr.readASCIIString(8)).toUpperCase();
-		ceilingTexture = NameUtils.nullTrim(sr.readASCIIString(8)).toUpperCase();
-		lightLevel = sr.readShort();
-		special = sr.readShort();
-		tag = sr.readShort();
+		ByteBuffer bb = ByteTools.readInputStream(in);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		floorHeight = bb.getShort();
+		ceilingHeight = bb.getShort();
+		StringBuilder floorName = new StringBuilder();
+		for(int i=0; i < 8; i++) { floorName.append(bb.getChar()); }
+		floorTexture = NameUtils.nullTrim(floorName.toString()).toUpperCase();
+		StringBuilder ceilingName = new StringBuilder();
+		for(int i=0; i < 8; i++) { ceilingName.append(bb.getChar()); }
+		ceilingTexture = NameUtils.nullTrim(ceilingName.toString()).toUpperCase();
+		lightLevel = bb.getShort();
+		special = bb.getShort();
+		tag = bb.getShort();
 	}
 
 	@Override
 	public void writeBytes(OutputStream out) throws IOException
 	{
-		SuperWriter sw = new SuperWriter(out, SuperWriter.LITTLE_ENDIAN);
-		sw.writeShort((short)floorHeight);
-		sw.writeShort((short)ceilingHeight);
-		sw.writeBytes(NameUtils.toASCIIBytes(floorTexture, 8));
-		sw.writeBytes(NameUtils.toASCIIBytes(ceilingTexture, 8));
-		sw.writeShort((short)lightLevel);
-		sw.writeShort((short)special);
-		sw.writeShort((short)tag);
+		ByteBuffer bb = ByteBuffer.allocate(2+2+8+8+2+2+2);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.putShort((short)floorHeight);
+		bb.putShort((short)ceilingHeight);
+		bb.put(ByteTools.stringToByteArrayWithFixedSize(floorTexture, 8));
+		bb.put(ByteTools.stringToByteArrayWithFixedSize(ceilingTexture, 8));
+		bb.putShort((short)lightLevel);
+		bb.putShort((short)special);
+		bb.putShort((short)tag);
 	}
 
 	@Override

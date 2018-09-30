@@ -25,6 +25,19 @@ public class ByteTools {
 		return (flags & bitmask) != 0;
 	}
 
+	public static byte[] stringToByteArrayWithFixedSize(String s, int size) {
+		ByteBuffer bb = ByteBuffer.allocate(size);
+		for(int i=0; i < size; i++) {
+			if(i < s.length()) {
+				bb.putChar(s.charAt(i));
+			} else {
+				// The buffer should be null-initialzed and of a fixed size, but this guarantees capacity matches len.
+				bb.putChar('\0');
+			}
+		}
+		return bb.array();
+	}
+
 	public static ByteBuffer readInputStream(InputStream in) throws IOException {
 		ArrayList<Byte> streamBuffer = new ArrayList<>(in.available());
 		int bin = in.read();

@@ -253,6 +253,7 @@ public class Picture implements BinaryObject, GraphicObject
 	@Override
 	public void writeBytes(OutputStream out) throws IOException
 	{
+		// TODO: I'm pretty sure we don't need toLittleEndian.  I think we can just use bytebuffer.
 		out.write(ByteTools.toLittleEndian((short)pixels.length)); // TODO: Unsigned short!  BUG!
 		out.write(ByteTools.toLittleEndian((short)pixels[0].length)); // TODO: Also unsigned short.
 		out.write(ByteTools.toLittleEndian((short)offsetX));

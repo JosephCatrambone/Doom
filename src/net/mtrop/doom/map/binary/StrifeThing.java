@@ -12,12 +12,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import com.blackrook.commons.Common;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import net.mtrop.doom.BinaryObject;
+import net.mtrop.doom.util.ByteTools;
 
 /**
  * Doom/Boom 10-byte format implementation of Thing that uses
@@ -170,41 +169,43 @@ public class StrifeThing extends CommonThing implements BinaryObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
 	}
 
 	@Override
 	public void readBytes(InputStream in) throws IOException
 	{
-		SuperReader sr = new SuperReader(in, SuperReader.LITTLE_ENDIAN);
-		x = sr.readShort();
-		y = sr.readShort();
-		angle = sr.readUnsignedShort();
-		type = sr.readUnsignedShort();
+		ByteBuffer bb = ByteTools.readInputStream(in);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		x = bb.getShort();
+		y = bb.getShort();
+		angle = bb.getShort(); // TODO: Unsigned
+		type = bb.getShort(); // TODO: Unsigned
 		
 		// bitflags
-		int flags = sr.readUnsignedShort();
-		easy = Common.bitIsSet(flags, (1 << 0));
-		medium = Common.bitIsSet(flags, (1 << 1));
-		hard = Common.bitIsSet(flags, (1 << 2));
-		ambush = Common.bitIsSet(flags, (1 << 3));
-		notSinglePlayer = Common.bitIsSet(flags, (1 << 4));
-		ambush = Common.bitIsSet(flags, (1 << 5));
-		ally = Common.bitIsSet(flags, (1 << 7));
-		translucent25 = Common.bitIsSet(flags, (1 << 8));
-		translucent75 = Common.bitIsSet(flags, (1 << 9));
+		int flags = bb.getShort(); // TODO: Unsigned
+		easy = ByteTools.bitIsSet(flags, (1 << 0));
+		medium = ByteTools.bitIsSet(flags, (1 << 1));
+		hard = ByteTools.bitIsSet(flags, (1 << 2));
+		ambush = ByteTools.bitIsSet(flags, (1 << 3));
+		notSinglePlayer = ByteTools.bitIsSet(flags, (1 << 4));
+		ambush = ByteTools.bitIsSet(flags, (1 << 5));
+		ally = ByteTools.bitIsSet(flags, (1 << 7));
+		translucent25 = ByteTools.bitIsSet(flags, (1 << 8));
+		translucent75 = ByteTools.bitIsSet(flags, (1 << 9));
 	}
 
 	@Override
 	public void writeBytes(OutputStream out) throws IOException
 	{
-		SuperWriter sw = new SuperWriter(out, SuperWriter.LITTLE_ENDIAN);
-		sw.writeShort((short)x);
-		sw.writeShort((short)y);
-		sw.writeShort((short)angle);
-		sw.writeShort((short)type);
-		
-		sw.writeUnsignedShort(Common.booleansToInt(
+		ByteBuffer bb = ByteBuffer.allocate(2+2+2+2+2);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.putShort((short)x);
+		bb.putShort((short)y);
+		bb.putShort((short)angle);
+		bb.putShort((short)type);
+
+		bb.putShort((short)ByteTools.booleansToInt( // TODO: Unsigned
 			easy,
 			medium,
 			hard,

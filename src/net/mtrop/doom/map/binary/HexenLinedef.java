@@ -12,13 +12,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import com.blackrook.commons.Common;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
-
 import net.mtrop.doom.BinaryObject;
+import net.mtrop.doom.util.ByteTools;
 import net.mtrop.doom.util.RangeUtils;
 
 /**
@@ -289,53 +288,55 @@ public class HexenLinedef extends CommonLinedef implements BinaryObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
 	}
 
 	@Override
 	public void readBytes(InputStream in) throws IOException
 	{
-		SuperReader sr = new SuperReader(in, SuperReader.LITTLE_ENDIAN);
+		ByteBuffer bb = ByteTools.readInputStream(in);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
 		
-		vertexStartIndex = sr.readUnsignedShort();
-		vertexEndIndex = sr.readUnsignedShort();
+		vertexStartIndex = bb.getShort(); // TODO: Unsigned.
+		vertexEndIndex = bb.getShort(); // TODO: Unsigned.
 		
 		// bitflags
-		int flags = sr.readUnsignedShort();
-		impassable = Common.bitIsSet(flags, (1 << 0));
-		monsterBlocking = Common.bitIsSet(flags, (1 << 1));
-		twoSided = Common.bitIsSet(flags, (1 << 2));
-		upperUnpegged = Common.bitIsSet(flags, (1 << 3));
-		lowerUnpegged = Common.bitIsSet(flags, (1 << 4));
-		secret = Common.bitIsSet(flags, (1 << 5));
-		soundBlocking = Common.bitIsSet(flags, (1 << 6));
-		notDrawn = Common.bitIsSet(flags, (1 << 7));
-		mapped = Common.bitIsSet(flags, (1 << 8));
-		repeatable = Common.bitIsSet(flags, (1 << 9));
-		activatedByMonsters = Common.bitIsSet(flags, (1 << 13));
-		blocksEverything = Common.bitIsSet(flags, (1 << 15));
+		int flags = bb.getShort(); // TODO: Unsigned
+		impassable = ByteTools.bitIsSet(flags, (1 << 0));
+		monsterBlocking = ByteTools.bitIsSet(flags, (1 << 1));
+		twoSided = ByteTools.bitIsSet(flags, (1 << 2));
+		upperUnpegged = ByteTools.bitIsSet(flags, (1 << 3));
+		lowerUnpegged = ByteTools.bitIsSet(flags, (1 << 4));
+		secret = ByteTools.bitIsSet(flags, (1 << 5));
+		soundBlocking = ByteTools.bitIsSet(flags, (1 << 6));
+		notDrawn = ByteTools.bitIsSet(flags, (1 << 7));
+		mapped = ByteTools.bitIsSet(flags, (1 << 8));
+		repeatable = ByteTools.bitIsSet(flags, (1 << 9));
+		activatedByMonsters = ByteTools.bitIsSet(flags, (1 << 13));
+		blocksEverything = ByteTools.bitIsSet(flags, (1 << 15));
 		
 		activationType = (0x01C00 & flags) >> 10;
 		
-		special = sr.readUnsignedByte();
-		arguments[0] = sr.readUnsignedByte();
-		arguments[1] = sr.readUnsignedByte();
-		arguments[2] = sr.readUnsignedByte();
-		arguments[3] = sr.readUnsignedByte();
-		arguments[4] = sr.readUnsignedByte();
+		special = bb.get(); // TODO: Unsigned
+		arguments[0] = bb.get(); // TODO: Unsigned
+		arguments[1] = bb.get(); // TODO: Unsigned
+		arguments[2] = bb.get(); // TODO: Unsigned
+		arguments[3] = bb.get(); // TODO: Unsigned
+		arguments[4] = bb.get(); // TODO: Unsigned
 
-		sidedefFrontIndex = sr.readShort();
-		sidedefBackIndex = sr.readShort();
+		sidedefFrontIndex = bb.getShort();
+		sidedefBackIndex = bb.getShort();
 	}
 
 	@Override
 	public void writeBytes(OutputStream out) throws IOException 
 	{
-		SuperWriter sw = new SuperWriter(out, SuperWriter.LITTLE_ENDIAN);
-		sw.writeUnsignedShort(vertexStartIndex);
-		sw.writeUnsignedShort(vertexEndIndex);
+		ByteBuffer bb = ByteBuffer.allocate(2+2+2+6+2+2);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.putShort((short)vertexStartIndex); // TODO: Unsigned
+		bb.putShort((short)vertexEndIndex); // TODO: Unsigned
 		
-		int flags = Common.booleansToInt(
+		int flags = ByteTools.booleansToInt(
 			impassable,
 			monsterBlocking,
 			twoSided,
@@ -356,17 +357,19 @@ public class HexenLinedef extends CommonLinedef implements BinaryObject
 		
 		flags |= ACTIVATION_FLAGS[activationType];
 		
-		sw.writeUnsignedShort(flags);
+		bb.putShort((short)flags); // TODO: Unsigned.
 		
-		sw.writeByte((byte)special);
-		sw.writeByte((byte)arguments[0]);
-		sw.writeByte((byte)arguments[1]);
-		sw.writeByte((byte)arguments[2]);
-		sw.writeByte((byte)arguments[3]);
-		sw.writeByte((byte)arguments[4]);
+		bb.put((byte)special);
+		bb.put((byte)arguments[0]);
+		bb.put((byte)arguments[1]);
+		bb.put((byte)arguments[2]);
+		bb.put((byte)arguments[3]);
+		bb.put((byte)arguments[4]);
 
-		sw.writeShort((short)sidedefFrontIndex);
-		sw.writeShort((short)sidedefBackIndex);
+		bb.putShort((short)sidedefFrontIndex);
+		bb.putShort((short)sidedefBackIndex);
+
+		out.write(bb.array());
 	}
 	
 	@Override

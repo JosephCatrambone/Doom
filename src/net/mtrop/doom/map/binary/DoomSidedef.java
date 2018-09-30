@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import net.mtrop.doom.BinaryObject;
+import net.mtrop.doom.util.ByteTools;
 import net.mtrop.doom.util.NameUtils;
 import net.mtrop.doom.util.RangeUtils;
 
@@ -278,16 +279,6 @@ public class DoomSidedef implements BinaryObject
 		sectorIndex = br.getShort();
 	}
 
-	public static void putEightByteName(ByteBuffer bb, String name) {
-		for(int i=0; i < 8; i++) {
-			if(i < name.length()) {
-				bb.putChar(name.charAt(i));
-			} else {
-				bb.putChar('\0');
-			}
-		}
-	}
-
 	@Override
 	public void writeBytes(OutputStream out) throws IOException
 	{
@@ -295,9 +286,9 @@ public class DoomSidedef implements BinaryObject
 		bb.order(ByteOrder.LITTLE_ENDIAN);
 		bb.putShort((short)offsetX);
 		bb.putShort((short)offsetY);
-		putEightByteName(bb, textureTop);
-		putEightByteName(bb, textureBottom);
-		putEightByteName(bb, textureMiddle);
+		bb.put(ByteTools.stringToByteArrayWithFixedSize(textureTop, 8));
+		bb.put(ByteTools.stringToByteArrayWithFixedSize(textureBottom, 8));
+		bb.put(ByteTools.stringToByteArrayWithFixedSize(textureMiddle, 8));
 		bb.putShort((short)sectorIndex);
 	}
 
