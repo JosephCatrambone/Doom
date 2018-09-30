@@ -11,7 +11,8 @@ import net.mtrop.doom.map.binary.DoomSector;
 import net.mtrop.doom.map.binary.DoomSidedef;
 import net.mtrop.doom.map.binary.DoomVertex;
 
-import com.blackrook.commons.list.List;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Common structures for binary maps loaded from a Wad.
@@ -28,9 +29,9 @@ public abstract class CommonMap
 
 	protected CommonMap()
 	{
-		sectors = new List<DoomSector>(33);
-		vertices = new List<DoomVertex>(200);
-		sidedefs = new List<DoomSidedef>(200);
+		sectors = new ArrayList<DoomSector>(33);
+		vertices = new ArrayList<DoomVertex>(200);
+		sidedefs = new ArrayList<DoomSidedef>(200);
 	}
 	
 	/**

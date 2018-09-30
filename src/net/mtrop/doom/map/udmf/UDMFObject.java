@@ -7,19 +7,18 @@
  ******************************************************************************/
 package net.mtrop.doom.map.udmf;
 
-import com.blackrook.commons.Reflect;
-import com.blackrook.commons.hash.CaseInsensitiveHashMap;
+import java.util.HashMap;
 
 /**
  * Main descriptor for all UDMF objects.
  * @author Matthew Tropiano
  */
-public class UDMFObject extends CaseInsensitiveHashMap<Object>
+public class UDMFObject extends HashMap<String, Object>
 {
 	/** Creates a new UDMFObject. */
 	public UDMFObject()
 	{
-		super(DEFAULT_CAPACITY, 1.0f);
+		super(100, 1.0f);
 	}
 	
 	/**
@@ -62,7 +61,20 @@ public class UDMFObject extends CaseInsensitiveHashMap<Object>
 		Object obj = get(attributeName);
 		if (obj == null)
 			return def;
-		return Reflect.createForType(attributeName, obj, Boolean.class);
+		if (obj instanceof Boolean) {
+			Boolean o = (Boolean) obj;
+			return o;
+		} else if (obj instanceof Integer) {
+			Integer i = (Integer)obj;
+			return i != 0;
+		} else if (obj instanceof Float) {
+			Float i = (Float)obj;
+			return i != 0f;
+		} else if (obj instanceof String) {
+			String s = (String)obj;
+			return !s.isEmpty();
+		}
+		return Boolean.parseBoolean(obj.toString());
 	}
 
 	/**
@@ -113,7 +125,24 @@ public class UDMFObject extends CaseInsensitiveHashMap<Object>
 		Object obj = get(attributeName);
 		if (obj == null)
 			return def;
-		return Reflect.createForType(attributeName, obj, Integer.class);
+		if (obj instanceof Boolean) {
+			Boolean o = (Boolean) obj;
+			if(o) {
+				return 1;
+			} else {
+				return 0;
+			}
+		} else if (obj instanceof Integer) {
+			Integer i = (Integer)obj;
+			return i;
+		} else if (obj instanceof Float) {
+			Float i = (Float)obj;
+			return i.intValue();
+		} else if (obj instanceof String) {
+			String s = (String)obj;
+			return Integer.parseInt(s);
+		}
+		return Integer.parseInt(obj.toString());
 	}
 
 	/**
@@ -162,7 +191,24 @@ public class UDMFObject extends CaseInsensitiveHashMap<Object>
 		Object obj = get(attributeName);
 		if (obj == null)
 			return def;
-		return Reflect.createForType(attributeName, obj, Float.class);
+		if (obj instanceof Boolean) {
+			Boolean o = (Boolean) obj;
+			if(o) {
+				return 1f;
+			} else {
+				return 0f;
+			}
+		} else if (obj instanceof Integer) {
+			Integer i = (Integer)obj;
+			return i.floatValue();
+		} else if (obj instanceof Float) {
+			Float i = (Float)obj;
+			return i;
+		} else if (obj instanceof String) {
+			String s = (String)obj;
+			return Float.parseFloat(s);
+		}
+		return Float.parseFloat(obj.toString());
 	}
 
 	/**

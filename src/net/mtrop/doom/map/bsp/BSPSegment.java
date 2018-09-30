@@ -12,13 +12,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import net.mtrop.doom.BinaryObject;
+import net.mtrop.doom.util.ByteTools;
 import net.mtrop.doom.util.RangeUtils;
-
-import com.blackrook.commons.Common;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
 
 /**
  * 12-byte BSP Segment information for a BSP tree in Doom.
@@ -258,31 +257,33 @@ public class BSPSegment implements BinaryObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
 	}
 
 	@Override
 	public void readBytes(InputStream in) throws IOException
 	{
-		SuperReader sr = new SuperReader(in, SuperReader.LITTLE_ENDIAN);
-		vertexStartIndex = sr.readUnsignedShort();
-		vertexEndIndex = sr.readUnsignedShort();
-		angle = sr.readUnsignedShort();
-		linedefIndex = sr.readUnsignedShort();
-		direction = sr.readUnsignedShort();
-		offset = sr.readUnsignedShort();
+		ByteBuffer bb = ByteTools.readInputStream(in);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		vertexStartIndex = bb.getShort(); // TODO: Unsigned.
+		vertexEndIndex = bb.getShort(); // TODO: Unsigned.
+		angle = bb.getShort(); // TODO: Unsigned.
+		linedefIndex = bb.getShort(); // TODO: Unsigned.
+		direction = bb.getShort(); // TODO: Unsigned.
+		offset = bb.getShort(); // TODO: Unsigned.
 	}
 
 	@Override
 	public void writeBytes(OutputStream out) throws IOException
 	{
-		SuperWriter sw = new SuperWriter(out, SuperWriter.LITTLE_ENDIAN);
-		sw.writeUnsignedShort(vertexStartIndex);
-		sw.writeUnsignedShort(vertexEndIndex);
-		sw.writeUnsignedShort(angle);
-		sw.writeUnsignedShort(linedefIndex);
-		sw.writeUnsignedShort(direction);
-		sw.writeUnsignedShort(offset);
+		ByteBuffer bb = ByteBuffer.allocate(2+2+2+2+2+2);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.putShort((short)vertexStartIndex); // TODO: Unsigned.
+		bb.putShort((short)vertexEndIndex); // TODO: Unsigned.
+		bb.putShort((short)angle); // TODO: Unsigned.
+		bb.putShort((short)linedefIndex); // TODO: Unsigned.
+		bb.putShort((short)direction); // TODO: Unsigned.
+		bb.putShort((short)offset); // TODO: Unsigned.
 	}
 
 }

@@ -12,18 +12,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Queue;
 
 import net.mtrop.doom.BinaryObject;
+import net.mtrop.doom.util.ByteTools;
 import net.mtrop.doom.util.RangeUtils;
-
-import com.blackrook.commons.Common;
-import com.blackrook.commons.ObjectPair;
-import com.blackrook.commons.hash.HashedQueueMap;
-import com.blackrook.commons.index.SparseQueueGridIndex;
-import com.blackrook.commons.linkedlist.Queue;
-import com.blackrook.commons.math.Pair;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
 
 /**
  * Representation of the Blockmap lump for a map.
@@ -210,13 +205,14 @@ public class BSPBlockmap implements BinaryObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
 	}
 
 	@Override
 	public void readBytes(InputStream in) throws IOException
 	{
-		SuperReader sr = new SuperReader(in,SuperReader.LITTLE_ENDIAN);
+		ByteBuffer bb = ByteTools.readInputStream(in);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
 		innerMap.clear();
 		startX = sr.readShort();
 		startY = sr.readShort();

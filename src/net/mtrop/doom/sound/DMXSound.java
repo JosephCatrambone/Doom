@@ -12,13 +12,6 @@ import java.io.*;
 import net.mtrop.doom.BinaryObject;
 import net.mtrop.doom.util.RangeUtils;
 
-import com.blackrook.commons.Common;
-import com.blackrook.commons.math.RMath;
-import com.blackrook.commons.math.wave.CustomWaveForm;
-import com.blackrook.commons.math.wave.CustomWaveForm.InterpolationType;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
-
 /**
  * This class holds digital sound information.
  * The format that this reads is the DMX PCM Format, by Digital Expressions, Inc.,
@@ -156,7 +149,7 @@ public class DMXSound implements BinaryObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
 	}
 
 	@Override
