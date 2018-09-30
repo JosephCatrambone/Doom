@@ -7,22 +7,20 @@
  ******************************************************************************/
 package net.mtrop.doom.graphics;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
+import java.nio.channels.Pipe;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.mtrop.doom.BinaryObject;
 import net.mtrop.doom.GraphicObject;
+import net.mtrop.doom.util.ByteTools;
 import net.mtrop.doom.util.RangeUtils;
-
-import com.blackrook.commons.Common;
-import com.blackrook.commons.hash.HashMap;
-import com.blackrook.commons.math.RMath;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
 
 import static java.lang.Integer.max;
 import static java.lang.Integer.min;
@@ -207,13 +205,30 @@ public class Picture implements BinaryObject, GraphicObject
 	@Override
 	public void readBytes(InputStream in) throws IOException
 	{
-		SuperReader sr = new SuperReader(in,SuperReader.LITTLE_ENDIAN);
-		setDimensions(sr.readUnsignedShort(), sr.readUnsignedShort());
-		offsetX = sr.readShort();
-		offsetY = sr.readShort();
+		// JC: This is perhaps less efficient because we're reading the whole thing into memory and THEN breaking it out.
+		// This means twice the ram will be required versus just reading the objects directly, but I know of no way to
+		// flip the endianness of an object stream.
+		ArrayList<Byte> streamBuffer = new ArrayList<>(in.available());
+		int bin = in.read();
+		while(bin != -1) {
+			streamBuffer.add((byte)(0xFF & bin));
+			bin = in.read();
+		}
+		ByteBuffer bb = ByteBuffer.allocate(streamBuffer.size());
+		for(byte b : streamBuffer) {
+			bb.put(b);
+		}
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+
+		setDimensions((short)(bb.getShort() & 0xFFFF), (short)(bb.getShort() & 0xFFFF));
+		offsetX = bb.getShort();
+		offsetY = bb.getShort();
 
 		// load offset table.
-		int[] columnOffsets = sr.readInts(getWidth());
+		int[] columnOffsets = new int[getWidth()];
+		for(int i=0; i < columnOffsets.length; i++) {
+			columnOffsets[i] = bb.getInt();
+		}
 		
 		// data must be treated as a stream: find highest short offset so that the reading can stop.
 		int offMax = -1;
@@ -226,7 +241,7 @@ public class Picture implements BinaryObject, GraphicObject
 		HashMap<Integer, byte[]> columnData = new HashMap<Integer, byte[]>();
 
 		for (int i = 0; i < columnOffsets.length; i++)
-			columnData.put(columnOffsets[i],columnRead(sr));
+			columnData.put(columnOffsets[i],columnRead(bb));
 			
 		for (int x = 0; x < columnOffsets.length; x++)
 		{
@@ -247,11 +262,10 @@ public class Picture implements BinaryObject, GraphicObject
 	@Override
 	public void writeBytes(OutputStream out) throws IOException
 	{
-		SuperWriter sw = new SuperWriter(out, SuperWriter.LITTLE_ENDIAN);
-		sw.writeUnsignedShort(pixels.length);
-		sw.writeUnsignedShort(pixels[0].length);
-		sw.writeShort((short)offsetX);
-		sw.writeShort((short)offsetY);
+		out.write(ByteTools.toLittleEndian((short)pixels.length)); // TODO: Unsigned short!  BUG!
+		out.write(ByteTools.toLittleEndian((short)pixels[0].length)); // TODO: Also unsigned short.
+		out.write(ByteTools.toLittleEndian((short)offsetX));
+		out.write(ByteTools.toLittleEndian((short)offsetY));
 		
 		int[] columnOffsets = new int[getWidth()];
 
@@ -319,31 +333,33 @@ public class Picture implements BinaryObject, GraphicObject
 		}
 		
 		for (int n : columnOffsets)
-			sw.writeInt(n);
+			out.write(ByteTools.toLittleEndian((int)n)); // (int) is redundant but I want this to be explicit.
 		
-		sw.writeBytes(dataBytes.toByteArray());
+		out.write(dataBytes.toByteArray());
 	}
 
 	// Reads a column of pixels.
-	private byte[] columnRead(SuperReader sr) throws IOException
+	private byte[] columnRead(ByteBuffer bb) throws IOException
 	{
 		ByteArrayOutputStream out = new ByteArrayOutputStream(); 
 	
 		int offs = 0;
 		int span = 0;
 	
-		offs = (sr.readByte() & 0x0ff);
+		offs = (bb.get() & 0x0ff);
 		while (offs != 255)
 		{
-			span = (sr.readByte() & 0x0ff);
-			sr.readByte();
+			span = (bb.get() & 0x0ff);
+			bb.get();
 			
 			out.write(offs);
 			out.write(span);
-			out.write(sr.readBytes(span));
-			sr.readByte();
+			for(int i=0; i < span; i++) {
+				out.write(bb.get());
+			}
+			bb.get();
 			
-			offs = (sr.readByte() & 0x0ff);
+			offs = (bb.get() & 0x0ff);
 		}
 		
 		return out.toByteArray();
