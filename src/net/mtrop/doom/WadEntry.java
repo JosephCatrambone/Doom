@@ -7,14 +7,9 @@
  ******************************************************************************/
 package net.mtrop.doom;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
 
 import net.mtrop.doom.util.NameUtils;
 
@@ -72,7 +67,14 @@ public class WadEntry
 		bb.order(ByteOrder.LITTLE_ENDIAN);
 		int offset = bb.getInt();
 		int size = bb.getInt();
-		String name = NameUtils.nullTrim(sr.readASCIIString(8)).toUpperCase();
+		StringBuilder sb = new StringBuilder();
+		for(int i=0; i < 8; i++) {
+			char c = bb.getChar();
+			if(c != '\0') {
+				sb.append(c);
+			}
+		}
+		String name = sb.toString().toUpperCase();
 		return new WadEntry(name, offset, size); 
 	}
 	
@@ -115,19 +117,17 @@ public class WadEntry
 	 */
 	public byte[] getNameBytes()
 	{
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		SuperWriter sw = new SuperWriter(bos, SuperWriter.LITTLE_ENDIAN);
+		ByteBuffer bb = ByteBuffer.allocate(8);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
 
-		try {
-			sw.writeASCIIString(name);
-			// null pad out to 8
-			for (int n = name.length(); n < 8; n++)
-				sw.writeByte((byte)0x00);
-		} catch (IOException e) {
-			// Should not happen.
+		for(char c : name.toCharArray()) {
+			bb.putChar(c);
 		}
-		
-		return bos.toByteArray();
+		for(int i=name.length(); i < 8; i++) {
+			bb.put((byte)0x00);
+		}
+
+		return bb.array();
 	}
 
 	/**
@@ -136,20 +136,12 @@ public class WadEntry
 	 */
 	public byte[] getBytes()
 	{
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		SuperWriter sw = new SuperWriter(bos, SuperWriter.LITTLE_ENDIAN);
-		try {
-			sw.writeInt(offset);
-			sw.writeInt(size);
-			sw.writeASCIIString(name);
-			// null pad out to 8
-			for (int n = name.length(); n < 8; n++)
-				sw.writeByte((byte)0x00);
-		} catch (IOException e) {
-			// Should not happen.
-		}
-		
-		return bos.toByteArray();
+		ByteBuffer bb = ByteBuffer.allocate(4+4+8);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.putInt(offset);
+		bb.putInt(size);
+		bb.put(getNameBytes());
+		return bb.array();
 	}
 	
 	@Override
