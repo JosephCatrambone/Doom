@@ -12,10 +12,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import com.blackrook.commons.Common;
-import com.blackrook.io.SuperReader;
-import com.blackrook.io.SuperWriter;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import net.mtrop.doom.BinaryObject;
 import net.mtrop.doom.util.NameUtils;
@@ -246,31 +244,61 @@ public class DoomSidedef implements BinaryObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
+	}
+
+	/*** getEightByteName
+	 * Fetches eight characters exactly and trims the nulls before returning the string.
+	 * Will mutate bb.
+	 * @param bb
+	 * @return
+	 */
+	public static String getEightByteName(ByteBuffer bb) {
+		StringBuilder nameBuilder = new StringBuilder(8);
+		for(int i=0; i < 8; i++) {
+			char c = bb.getChar();
+			if (c != '\0') {
+				nameBuilder.append(c);
+			}
+		}
+		return nameBuilder.toString();
 	}
 
 	@Override
 	public void readBytes(InputStream in) throws IOException
 	{
-		SuperReader sr = new SuperReader(in, SuperReader.LITTLE_ENDIAN);
-		offsetX = sr.readShort();
-		offsetY = sr.readShort();
-		textureTop = NameUtils.nullTrim(sr.readASCIIString(8)).toUpperCase();
-		textureBottom = NameUtils.nullTrim(sr.readASCIIString(8)).toUpperCase();
-		textureMiddle = NameUtils.nullTrim(sr.readASCIIString(8)).toUpperCase();
-		sectorIndex = sr.readShort();
+		ByteBuffer br = ByteBuffer.allocate(2+2+8+8+8+2);
+		in.read(br.array(), 0, br.capacity());
+		br.order(ByteOrder.LITTLE_ENDIAN);
+		offsetX = br.getShort();
+		offsetY = br.getShort();
+		textureTop = getEightByteName(br).toUpperCase();
+		textureBottom = getEightByteName(br).toUpperCase();
+		textureMiddle = getEightByteName(br).toUpperCase();
+		sectorIndex = br.getShort();
+	}
+
+	public static void putEightByteName(ByteBuffer bb, String name) {
+		for(int i=0; i < 8; i++) {
+			if(i < name.length()) {
+				bb.putChar(name.charAt(i));
+			} else {
+				bb.putChar('\0');
+			}
+		}
 	}
 
 	@Override
 	public void writeBytes(OutputStream out) throws IOException
 	{
-		SuperWriter sw = new SuperWriter(out, SuperWriter.LITTLE_ENDIAN);
-		sw.writeShort((short)offsetX);
-		sw.writeShort((short)offsetY);
-		sw.writeBytes(NameUtils.toASCIIBytes(textureTop, 8));
-		sw.writeBytes(NameUtils.toASCIIBytes(textureBottom, 8));
-		sw.writeBytes(NameUtils.toASCIIBytes(textureMiddle, 8));
-		sw.writeShort((short)sectorIndex);
+		ByteBuffer bb = ByteBuffer.allocate(2+2+8+8+8+2);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		bb.putShort((short)offsetX);
+		bb.putShort((short)offsetY);
+		putEightByteName(bb, textureTop);
+		putEightByteName(bb, textureBottom);
+		putEightByteName(bb, textureMiddle);
+		bb.putShort((short)sectorIndex);
 	}
 
 	@Override

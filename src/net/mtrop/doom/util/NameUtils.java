@@ -12,8 +12,6 @@ import java.text.Normalizer;
 import java.text.Normalizer.Form;
 import java.util.regex.Pattern;
 
-import com.blackrook.commons.Common;
-
 /**
  * Name utility methods.
  * @author Matthew Tropiano
@@ -87,7 +85,7 @@ public final class NameUtils
 		if (isValidEntryName(name))
 			return name;
 		
-		if (Common.isEmpty(name))
+		if (name.isEmpty())
 			return "-";
 			
 		// remove diacritics
@@ -135,7 +133,7 @@ public final class NameUtils
 	 */
 	public static boolean isValidTextureName(String name)
 	{
-		return !Common.isEmpty(name) && TEXTURE_NAME.matcher(name).matches();
+		return !name.isEmpty() && TEXTURE_NAME.matcher(name).matches();
 	}
 
 	/**
@@ -157,7 +155,7 @@ public final class NameUtils
 		if (isValidTextureName(name))
 			return name;
 		
-		if (Common.isEmpty(name))
+		if (name.isEmpty())
 			return EMPTY_TEXTURE_NAME;
 			
 		// remove diacritics

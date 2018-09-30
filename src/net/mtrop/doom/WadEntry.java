@@ -10,6 +10,8 @@ package net.mtrop.doom;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import com.blackrook.io.SuperReader;
 import com.blackrook.io.SuperWriter;
@@ -66,9 +68,10 @@ public class WadEntry
 	 */
 	public static WadEntry create(byte[] data) throws IOException
 	{
-		SuperReader sr = new SuperReader(new ByteArrayInputStream(data), SuperReader.LITTLE_ENDIAN);
-		int offset = sr.readInt();
-		int size = sr.readInt();
+		ByteBuffer bb = ByteBuffer.wrap(data);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
+		int offset = bb.getInt();
+		int size = bb.getInt();
 		String name = NameUtils.nullTrim(sr.readASCIIString(8)).toUpperCase();
 		return new WadEntry(name, offset, size); 
 	}

@@ -1,6 +1,12 @@
 # Doom Struct
 
-Copyright (c) 2015 - 2016 Matt Tropiano  
+Copyright (c) 2015 - 2016 Matt Tropiano
+
+Modified in 2018 by Joseph Catrambone  
+
+### Author's Note:
+
+This library is a duplicate of Matt Tropiano's Doom Struct, but with the Black Rook library requirements removed and replaced with the Java Standard Library. 
 
 ### NOTICE
 
@@ -10,17 +16,6 @@ of which I have been granted rights to rewrite (the rights were granted to mysel
 All deprecated classes from the origin project will not be in this one.
 All end users are encouraged to switch to this one, as this project will be 
 actively maintained.
-
-### Required Libraries
-
-Black Rook Commons 2.31.0+  
-[https://github.com/BlackRookSoftware/Common](https://github.com/BlackRookSoftware/Common)
-
-Black Rook Common I/O 2.5.0+  
-[https://github.com/BlackRookSoftware/CommonIO](https://github.com/BlackRookSoftware/CommonIO)
-
-Black Rook Common Lang 2.9.0+  
-[https://github.com/BlackRookSoftware/CommonLang](https://github.com/BlackRookSoftware/CommonLang)
 
 ### Source
 

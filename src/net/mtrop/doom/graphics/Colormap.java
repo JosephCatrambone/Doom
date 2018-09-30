@@ -11,10 +11,6 @@ import java.io.*;
 
 import net.mtrop.doom.BinaryObject;
 
-import com.blackrook.commons.Common;
-import com.blackrook.commons.math.RMath;
-import com.blackrook.io.SuperReader;
-
 /**
  * This is a single entry that indexes the palette indices for color lookup.
  * This is NOT the representation of the complete COLORMAP lump, see ColorMapLump

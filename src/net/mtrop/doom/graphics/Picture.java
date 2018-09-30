@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 
 import net.mtrop.doom.BinaryObject;
 import net.mtrop.doom.GraphicObject;
@@ -22,6 +23,9 @@ import com.blackrook.commons.hash.HashMap;
 import com.blackrook.commons.math.RMath;
 import com.blackrook.io.SuperReader;
 import com.blackrook.io.SuperWriter;
+
+import static java.lang.Integer.max;
+import static java.lang.Integer.min;
 
 /**
  * Doom graphic data stored as column-major indices (patches and most graphics with baked-in offsets). 
@@ -170,7 +174,7 @@ public class Picture implements BinaryObject, GraphicObject
 	public void setPixel(int x, int y, int value)
 	{
 		RangeUtils.checkRange("Pixel ("+x+", "+y+")", -1, 255, value);
-		pixels[x][y] = (short)RMath.clampValue(value, -1, 255);
+		pixels[x][y] = (short)min(max(value, 0), 255);
 	}
 	
 	/**
@@ -197,7 +201,7 @@ public class Picture implements BinaryObject, GraphicObject
 	{
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		readBytes(bin);
-		Common.close(bin);
+		bin.close();
 	}
 
 	@Override

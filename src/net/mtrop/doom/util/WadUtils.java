@@ -7,13 +7,13 @@
  ******************************************************************************/
 package net.mtrop.doom.util;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import net.mtrop.doom.Wad;
 import net.mtrop.doom.WadEntry;
-
-import com.blackrook.commons.list.List;
-import com.blackrook.io.SuperReader;
 
 /**
  * WAD utility methods and functions.
@@ -53,7 +53,7 @@ public final class WadUtils
 	 */
 	public static WadEntry[] getEntriesInNamespace(String prefix, Pattern ignorePattern, Wad wad)
 	{
-		List<WadEntry> entryList = new List<WadEntry>(100);
+		ArrayList<WadEntry> entryList = new ArrayList<WadEntry>(100);
 		
 		int start = wad.getIndexOf(prefix+"_START");
 		if (start > 0)
@@ -84,33 +84,29 @@ public final class WadUtils
 	public static boolean isStrifeTextureData(byte[] b)
 	{
 		int ptr = 0;
-		byte[] buf = new byte[4];
+		ByteBuffer bb = ByteBuffer.wrap(b);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
 	
-		System.arraycopy(b, ptr, buf, 0, 4);
-		int textureCount = SuperReader.bytesToInt(buf, SuperReader.LITTLE_ENDIAN);
+		int textureCount = bb.getInt(0);
 		ptr = (textureCount * 4) + 20;
 		
 		boolean good = true;
 		while (ptr < b.length && good)
 		{
-			System.arraycopy(b, ptr, buf, 0, 4);
-			
 			// test for unused texture data.
-			if (SuperReader.bytesToInt(buf, SuperReader.LITTLE_ENDIAN) != 0)
+			if (bb.getInt(ptr) != 0)
 				good = false;
 	
 			// test for unused patch data.
 			else
 			{
 				ptr += 4;
-				System.arraycopy(b, ptr, buf, 0, 2);
-				int patches = SuperReader.bytesToInt(buf, SuperReader.LITTLE_ENDIAN);
+				int patches = bb.getShort(ptr);
 				ptr += 2;
 				while (patches > 0)
 				{
 					ptr += 6;
-					System.arraycopy(b, ptr, buf, 0, 4);
-					int x = SuperReader.bytesToInt(buf, SuperReader.LITTLE_ENDIAN);
+					int x = bb.getInt(ptr);
 					if (x > 1 || x < 0)
 						good = false;
 					ptr += 4;
